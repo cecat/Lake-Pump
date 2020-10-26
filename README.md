@@ -1,4 +1,4 @@
-# PowerWatch
+# Lake-Watch (PowerWatch++)
 Use Particle.io Electron (cellular) w/ LiPo batter to Monitor crawlspace temp and power status at a remote home (avoid pipes freezing, etc.)
 
 In steady state (no power outage, crawspace not too cold) theand power status to 
