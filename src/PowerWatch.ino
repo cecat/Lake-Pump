@@ -17,12 +17,10 @@ FuelGauge fuel;
 #define REPORT          3600007  // Battery lasts 12-18h so update every ~1h (1)
 #define TEN_MIN          599999  // watch power at ~10 min (600k ms) intervals
 #define FIVE_MIN         314159  // watch more closely; every ~5min (300k ms)
-#define LINE_PWR        1        // we're plugged in (5 means we are on battery)
+#define LINE_PWR        1        // we're plugged (see powerSource)
 float fuelPercent     = 0;
-bool  TimeToCheck     = TRUE;
-bool  TimeToReport    = TRUE;
 bool  PowerIsOn       = TRUE;
-int   powerSource     = 0;
+int   powerSource     = 0;       // 1= line power; 2= usb host power; 5=battery
 
 // DS18B20 temperature sensor (needs libraries OneWire and DS18B20)
 DS18B20  sensor(D1, true);
@@ -31,7 +29,7 @@ double crawlTemp;
 // danger tripwire settings
 float danger        = 35.00;    // this is the threshold we define as "pipe freeze eminent"
 float allGood       = 37.00;    // not gonna relax until we are seeing temperature go back solid up above danger
-float Freezing      = 32.00;    // now we are really in trouble
+float Freezing      = 32.50;    // now we are really in trouble
 bool  inDanger      = FALSE;    // start with a clean slate!
 
 /*
@@ -74,8 +72,10 @@ MQTT client(MY_SERVER, 1883, MQTT_KEEPALIVE, mqtt_callback);
 
 bool DEBUG = TRUE;
 
-Timer powerTimer(FIVE_MIN, checkPower);
+Timer checkTimer(TEN_MIN, checkPower);
 Timer reportTimer(REPORT, reportPower);
+bool  TimeToCheck     = TRUE;
+bool  TimeToReport    = TRUE;
 
 void setup() {
     Time.zone (-5);
@@ -89,7 +89,7 @@ void setup() {
       } else {
         Particle.publish("mqtt_startup", "Failed to connect to HA - check IP address, username, passwd", 3600, PRIVATE);
     }
-    powerTimer.start();
+    checkTimer.start();
     reportTimer.start();
 }
 
@@ -103,12 +103,10 @@ void loop() {
             PowerIsOn = TRUE;
             Particle.publish("POWER-start ON", String(powerSource), PRIVATE);
             tellHASS(TOPIC_B, String(fuelPercent));
-            powerTimer.changePeriod(TEN_MIN);
         } else {
             PowerIsOn = FALSE;
             Particle.publish("POWER-start OFF", String(powerSource), PRIVATE);
             tellHASS(TOPIC_C, String(powerSource));
-            powerTimer.changePeriod(FIVE_MIN);
         }
         // check crawlspace
         crawlTemp = getTemp();
@@ -121,10 +119,21 @@ void loop() {
       if (PowerIsOn) {  tellHASS(TOPIC_B, String(fuelPercent));
               } else {  tellHASS(TOPIC_C, String(fuelPercent)); }
       tellHASS(TOPIC_D, String(crawlTemp));
-      if (crawlTemp > allGood)   tellHASS(TOPIC_E, String(crawlTemp));
-      if (crawlTemp < danger)    tellHASS(TOPIC_F, String(crawlTemp));
-      if (crawlTemp < Freezing)  tellHASS(TOPIC_G, String(crawlTemp));
+      if (crawlTemp > allGood)   { tellHASS(TOPIC_E, String(crawlTemp)); inDanger=FALSE;}
+      if (crawlTemp < danger)    { tellHASS(TOPIC_F, String(crawlTemp)); inDanger=TRUE;}
+      if (crawlTemp < Freezing)  { tellHASS(TOPIC_G, String(crawlTemp)); inDanger=TRUE;}
     }
+
+    // set timer periods
+    if (PowerIsOn &! inDanger) { 
+      checkTimer.changePeriod(TEN_MIN); 
+      reportTimer.changePeriod(REPORT);
+    } 
+    if (!PowerIsOn || inDanger) {
+      checkTimer.changePeriod(FIVE_MIN);
+      reportTimer.changePeriod(TEN_MIN);
+    }
+    if (crawlTemp < Freezing) reportTimer.changePeriod(FIVE_MIN);
 } 
 /************************************/
 /***         FUNCTIONS       ***/
