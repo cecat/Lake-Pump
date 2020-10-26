@@ -46,7 +46,7 @@ bool  inDanger      = FALSE;    // start with a clean slate!
 //const char *HA_USR = "your_ha_mqtt_usrname";
 //const char *HA_PWD = "your_ha_mqtt_passwd";
 //uncomment this line and fill in w.x.y.z if you are going by IP address,:
-//  byte MY_SERVER[] = { 73, 246, 85, 17 };
+//  byte MY_SERVER[] = { w, x, y, z };
 // OR this one if you are doing hostname (filling in yours)
 //  #define MY_SERVER "your.mqtt.broker.tld"
 const char *CLIENT_NAME = "photon";
