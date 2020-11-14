@@ -100,13 +100,18 @@ void loop() {
         fuelPercent = fuel.getSoC(); 
         powerSource = System.powerSource();
         if (powerSource == LINE_PWR) {
-            PowerIsOn = TRUE;
+          if (!PowerIsOn) {
+            tellHASS(TOPIC_B, String(powerSource));
             Particle.publish("POWER-start ON", String(powerSource), PRIVATE);
-            tellHASS(TOPIC_B, String(fuelPercent));
+          }
+          PowerIsOn = TRUE;
+          checkTimer.changePeriod(TEN_MIN);
         } else {
-            PowerIsOn = FALSE;
-            Particle.publish("POWER-start OFF", String(powerSource), PRIVATE);
+          if (PowerIsOn) {
             tellHASS(TOPIC_C, String(powerSource));
+            checkTimer.changePeriod(FIVE_MIN);
+          }
+          PowerIsOn = FALSE;
         }
         // check crawlspace
         crawlTemp = getTemp();
