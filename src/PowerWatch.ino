@@ -58,7 +58,7 @@ const char *TOPIC_F = "ha/cabin/crawlWarn";
 const char *TOPIC_G = "ha/cabin/crawlFreeze";
 
 // MQTT functions
-void mqtt_callback(char* topic, byte* payload, unsigned int length);
+//void mqtt_callback(char* topic, byte* payload, unsigned int length);
 void timer_callback_send_mqqt_data();    
  // MQTT callbacks implementation (not used here but required)
 void mqtt_callback(char* topic, byte* payload, unsigned int length) {
