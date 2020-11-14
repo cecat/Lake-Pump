@@ -65,7 +65,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
      char p[length + 1];
      memcpy(p, payload, length);
      p[length] = 0; 
-     Particle.publish("mqtt", p, 3600, PRIVATE);
+     Particle.publish("mqtt recvd", p, 3600, PRIVATE);
  }
 
 MQTT client(MY_SERVER, 1883, MQTT_KEEPALIVE, mqtt_callback);
