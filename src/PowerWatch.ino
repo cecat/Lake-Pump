@@ -9,12 +9,12 @@
 
 #include <Particle.h>
 #include <MQTT.h>
-#include "secrets.h"
+#include "secrets.h" 
 #include <OneWire.h>
 #include <DS18B20.h>
 
 FuelGauge fuel;
-#define REPORT          3600007  // Battery lasts 12-18h so update every ~1h (1)
+#define REPORT          1799999  // Battery lasts ~12h so update every ~30min
 #define TEN_MIN          599999  // watch power at ~10 min (600k ms) intervals
 #define FIVE_MIN         314159  // watch more closely; every ~5min (300k ms)
 #define LINE_PWR        1        // we're plugged (see powerSource)
@@ -38,7 +38,7 @@ bool  inDanger      = FALSE;    // start with a clean slate!
 #define MQTT_KEEPALIVE 30 * 60              // 30 minutes but afaict it's ignored...
 /*
  * When you configure Mosquitto Broker MQTT in HA you will set a
- * username and password for MQTT - plug these in here if you are not
+ * username and password specific to MQTT - plug these in here if you are not
  * using a secrets.h file. (and comment out the #include "sectets.h" line above)
  */
 //const char *HA_USR = "your_ha_mqtt_usrname";
@@ -70,7 +70,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
 
 MQTT client(MY_SERVER, 1883, MQTT_KEEPALIVE, mqtt_callback);
 
-bool DEBUG = TRUE;
+bool DEBUG = FALSE;
 
 Timer checkTimer(TEN_MIN, checkPower);
 Timer reportTimer(REPORT, reportPower);
