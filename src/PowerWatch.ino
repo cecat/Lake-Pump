@@ -14,8 +14,7 @@
 #include <DS18B20.h>
 
 FuelGauge fuel;
-#define REPORT          1799999  // Battery lasts ~12h so update every ~30min
-#define TEN_MIN          599999  // watch power at ~10 min (600k ms) intervals
+#define REPORT          1799999  // 30 min
 #define FIVE_MIN         314159  // watch more closely; every ~5min (300k ms)
 #define LINE_PWR        1        // we're plugged (see powerSource)
 float fuelPercent     = 0;
@@ -72,7 +71,7 @@ MQTT client(MY_SERVER, 1883, MQTT_KEEPALIVE, mqtt_callback);
 
 bool DEBUG = FALSE;
 
-Timer checkTimer(TEN_MIN, checkPower);
+Timer checkTimer(FIVE_MIN, checkPower);
 Timer reportTimer(REPORT, reportPower);
 bool  TimeToCheck     = TRUE;
 bool  TimeToReport    = TRUE;
@@ -105,40 +104,40 @@ void loop() {
             Particle.publish("POWER-start ON", String(powerSource), PRIVATE);
           }
           PowerIsOn = TRUE;
-          checkTimer.changePeriod(TEN_MIN);
         } else {
           if (PowerIsOn) {
             tellHASS(TOPIC_C, String(powerSource));
-            checkTimer.changePeriod(FIVE_MIN);
           }
           PowerIsOn = FALSE;
         }
         // check crawlspace
         crawlTemp = getTemp();
-        if (crawlTemp > danger) tellHASS(TOPIC_E, String(crawlTemp));
+        if (crawlTemp > allGood) {
+          if (inDanger) {
+            tellHASS(TOPIC_E, String(crawlTemp));
+            inDanger=FALSE;
+          }
+        }
+        if (crawlTemp < danger)    { 
+          tellHASS(TOPIC_F, String(crawlTemp)); 
+          if (crawlTemp < Freezing)  { tellHASS(TOPIC_G, String(crawlTemp)); 
+          inDanger=TRUE;
+          }
+        }
     }
 
     if (TimeToReport) {
       TimeToReport = FALSE;
       tellHASS(TOPIC_A, String(fuelPercent));
       if (PowerIsOn) {  tellHASS(TOPIC_B, String(fuelPercent));
-              } else {  tellHASS(TOPIC_C, String(fuelPercent)); }
+          } else {  tellHASS(TOPIC_C, String(fuelPercent)); }
       tellHASS(TOPIC_D, String(crawlTemp));
-      if (crawlTemp > allGood)   { tellHASS(TOPIC_E, String(crawlTemp)); inDanger=FALSE;}
-      if (crawlTemp < danger)    { tellHASS(TOPIC_F, String(crawlTemp)); inDanger=TRUE;}
-      if (crawlTemp < Freezing)  { tellHASS(TOPIC_G, String(crawlTemp)); inDanger=TRUE;}
+      if (inDanger) {
+        if (crawlTemp < Freezing) {
+          tellHASS(TOPIC_G, String(crawlTemp));
+        } else tellHASS(TOPIC_F, String(crawlTemp));
+      }
     }
-
-    // set timer periods
-    if (PowerIsOn &! inDanger) { 
-      checkTimer.changePeriod(TEN_MIN); 
-      reportTimer.changePeriod(REPORT);
-    } 
-    if (!PowerIsOn || inDanger) {
-      checkTimer.changePeriod(FIVE_MIN);
-      reportTimer.changePeriod(TEN_MIN);
-    }
-    if (crawlTemp < Freezing) reportTimer.changePeriod(FIVE_MIN);
 } 
 /************************************/
 /***         FUNCTIONS       ***/
