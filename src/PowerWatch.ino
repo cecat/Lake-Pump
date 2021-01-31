@@ -4,6 +4,8 @@
     2020-Oct
       - added MQTT to connect to remote Home Assistant
       - added ds18b20 temperature sensor to monitor crawlspace
+    2021-Jan
+      - added connection check to MQTT just to be safe
                                           
  */
 
@@ -152,8 +154,12 @@ void reportPower() {  TimeToReport = TRUE;  }
 // Report to HASS via MQTT
 void tellHASS (const char *ha_topic, String ha_payload) {    
   client.connect(CLIENT_NAME, HA_USR, HA_PWD);
-  client.publish(ha_topic, ha_payload);
-  client.disconnect();
+  if (client.isConnected()) {
+    client.publish(ha_topic, ha_payload);
+    client.disconnect();
+  } else {
+    Particle.publish("mqtt", "Failed to connect", 3600, PRIVATE);
+  }
 }
 
 //  Check the crawlspace on the DS18B20 sensor (code from Lib examples)
