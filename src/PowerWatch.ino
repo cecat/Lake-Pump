@@ -19,9 +19,7 @@
 #include "vars.h"
 
 FuelGauge fuel;                   // lipo battery
-
-// DS18B20 temperature sensor (needs libraries OneWire and DS18B20)
-DS18B20  sensor(D1, true);
+DS18B20  sensor(D1, true);        // DS18B20 temperature sensor (needs libraries OneWire and DS18B20)
 
 /*
  * MQTT parameters
@@ -29,9 +27,7 @@ DS18B20  sensor(D1, true);
 #define MQTT_KEEPALIVE 35 * 60              // 60s is std default
 
 // MQTT functions
-//void mqtt_callback(char* topic, byte* payload, unsigned int length);
 void timer_callback_send_mqqt_data();    
- // MQTT callbacks implementation (not used here but required)
 void mqtt_callback(char* topic, byte* payload, unsigned int length) {
      char p[length + 1];
      memcpy(p, payload, length);
