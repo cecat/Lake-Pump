@@ -21,12 +21,9 @@
 FuelGauge fuel;                   // lipo battery
 DS18B20  sensor(D1, true);        // DS18B20 temperature sensor (needs libraries OneWire and DS18B20)
 
-/*
- * MQTT parameters
- */
-#define MQTT_KEEPALIVE 35 * 60              // 60s is std default
+// MQTT 
 
-// MQTT functions
+#define MQTT_KEEPALIVE 35 * 60              // 60s is std default
 void timer_callback_send_mqqt_data();    
 void mqtt_callback(char* topic, byte* payload, unsigned int length) {
      char p[length + 1];
@@ -34,7 +31,6 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
      p[length] = 0; 
      Particle.publish("mqtt recvd", p, 3600, PRIVATE);
  }
-
 MQTT client(MY_SERVER, 1883, MQTT_KEEPALIVE, mqtt_callback);
 int MQTT_CODE = 0;
 
