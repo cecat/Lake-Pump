@@ -81,7 +81,7 @@ void setup() {
 
 void loop() {
 
-// check everything, notify only state changes
+// check everything when timer fires; notify only state changes
     if (TimeToCheck) {
         TimeToCheck = FALSE;
         fuelPercent = fuel.getSoC(); 
