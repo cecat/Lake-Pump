@@ -1,17 +1,10 @@
-# Lake-Watch (PowerWatch++)
-Use Particle.io Electron (cellular) w/ LiPo batter to Monitor crawlspace temp and power status at a remote home (avoid pipes freezing, etc.)
+# Lake-Pump (PumpWatch)
+Use Particle.io Electron (cellular) w/ LiPo batter to Monitor well pump (used to drive sprinklers, hoses, etc. using lake water) to ensure that it does not lose prime (low pressure) and that it is not operating with no flow (high pressure).
 
-In steady state (no power outage, crawspace not too cold) theand power status to 
-a remote (or local) Home Assistant (HASS) via MQTT every hour.
-It will send a warning if the temperature falls below 35F
-and another warning if the temperature falls to 32F or below. 
+When pump is off this does not operate (it's powered by the same power switch that Home Assistant (HASS) uses to operate the pump.
 
-At HASS you can then up automations based on the topics as well as monitoring
-power status and temperature over time.
-This code uses MQTT with QoS=0 (i.e., none) but this still seems reliable with 
-decent cellular connectivity (or if you were using WiFi, then then you'd also 
-need to back up your WiFi and Internet gear to be notified of a power outage).
-
+While the pump is running, check pressure every 10sand report to Home Assistant using MQTT every 10 minutes just to give HASS a heartbeat.  If pressure drops below 35 PSI or goes above 50PSI, send HASS the reading immediately along with a request to shut down.
+  
 To use this code you will need to set either the hostname or IP address of your HA system,
 which for this code we assume is running the Mosquitto MQTT broker.
 Also, when setting up Mosquitto MQTT as a HASS integration you will have created
