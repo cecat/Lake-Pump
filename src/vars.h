@@ -1,26 +1,26 @@
 // Variables
 
+// Wiring
+#define sensorPin       A0        // our pressure sensor reports a range from 0.5 to 4.5v
+
 // reporting and checking intervals
-#define REPORT           900001  // 15 min reporting interval is 900001
-#define FIVE_MIN         314159  // watch more closely; every ~5min (300k ms)
-#define LINE_PWR        1        // we're plugged in (see powerSource)
+#define CHECK        10000        // check the pump pressure frequently
+#define REPORT      299993        // report every 5 min (why not use a prime to avoid colliding with check)
+#define ALARM        60000        // if in danger, sound the alarm every minute!
+#define DOGTIME     120000        // wait 2 minutes before putting the paddles on
 
-// power vars
-float fuelPercent     = 0;
-bool  PowerIsOn       = TRUE;
-int   powerSource     = 0;       // 1= line power; 2= usb host power; 5=battery
-
-//ds18b20 temp sensor vars
-#define MAXRETRY    4             // max times to poll temperature pin before giving up
-double crawlTemp;
-
+// sensor vars
+float pressure    = 00.00;        // sensor readings from 0.5-4.5v
 // danger tripwire settings
-float danger        = 35.00;    // this is the threshold we define as "pipe freeze eminent"
-float allGood       = 37.00;    // not gonna relax until we are seeing temperature go back solid up above danger
-float Freezing      = 32.50;    // now we are really in trouble
-bool  inDanger      = FALSE;    // start with a clean slate!
+float dangerHigh  = 50.00;        // above this threshold maybe someone closed all valves
+float dangerLow   = 35.00;        // below this threshold we probably lost our prime
+bool  inDanger      = FALSE;      // start with a clean slate!
 
 // mqtt debugging
 int   mqttCt        = 0;
 int   mqttFails     = 0;        
 int   mqttDis       = 0;        // unexpected disconnects
+
+retained bool SELF_RESTART = FALSE;
+int fails = 0;
+int GIVE_UP = 3;

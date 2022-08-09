@@ -1,3 +1,8 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#line 1 "/Users/charlescatlett/CODE/Lake-Pump/src/PumpWatch.ino"
 /*
   Monitor wate pressure when lake pump is operating
     C. Catlett Aug 2022
@@ -25,6 +30,14 @@
 
 // MQTT 
 
+void mqtt_callback(char* topic, byte* payload, unsigned int length);
+void watchdogHandler();
+void setup();
+void loop();
+void checkPSI();
+void reportPSI();
+void tellHASS (const char *ha_topic, String ha_payload);
+#line 28 "/Users/charlescatlett/CODE/Lake-Pump/src/PumpWatch.ino"
 #define MQTT_KEEPALIVE 35 * 60              // 60s is std default
 void timer_callback_send_mqqt_data();    
 void mqtt_callback(char* topic, byte* payload, unsigned int length) {
