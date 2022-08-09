@@ -1,1 +1,5 @@
-{}
+{
+    "particle.targetDevice": "PumpPressureCheck",
+    "particle.firmwareVersion": "3.3.0",
+    "particle.targetPlatform": "electron"
+}

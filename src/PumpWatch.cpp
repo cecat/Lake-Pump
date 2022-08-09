@@ -31,7 +31,6 @@
 // MQTT 
 
 void mqtt_callback(char* topic, byte* payload, unsigned int length);
-void watchdogHandler();
 void setup();
 void loop();
 void checkPSI();
@@ -55,18 +54,18 @@ bool  TimeToCheck     = TRUE;
 bool  TimeToReport    = TRUE;
 
 // Application watchdog - sometimes MQTT wedges things
-retained bool REBORN  = FALSE;  // did app watchdog restart us?
+/* retained bool REBORN  = FALSE;  // did app watchdog restart us?
 ApplicationWatchdog *wd;
 void watchdogHandler() {
   REBORN = TRUE;
   System.reset(RESET_NO_WAIT);
-}
+} */
 
 void setup() {
     Time.zone (-5);
     Particle.syncTime();
 
-    wd = new ApplicationWatchdog(DOGTIME, watchdogHandler, 1536); // restart after DOGTIME sec no pulse
+    /* wd = new ApplicationWatchdog(DOGTIME, watchdogHandler, 1536); // restart after DOGTIME sec no pulse
     if (REBORN) {
       Particle.publish("****WEDGED****", "app watchdog restart", 3600, PRIVATE);
       REBORN = FALSE;
@@ -74,7 +73,7 @@ void setup() {
     if (SELF_RESTART) {
       Particle.publish("----STUCK----", "self-reboot after 4 mqtt fails", 3600, PRIVATE);
       SELF_RESTART = FALSE;
-    }
+    } */
 
     pressure = analogRead(sensorPin);
     client.connect(CLIENT_NAME, HA_USR, HA_PWD);
@@ -122,7 +121,7 @@ void loop() {
 
     if (TimeToReport) {
       TimeToReport = FALSE;
-      wd->checkin(); // poke app watchdog we're going in...
+      // wd->checkin(); // poke app watchdog we're going in...
 
       //client.disconnect();
       if (client.isConnected()) {
