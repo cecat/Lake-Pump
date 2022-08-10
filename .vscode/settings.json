@@ -1,5 +1,5 @@
 {
-    "particle.targetDevice": "PumpPressureCheck",
+    "particle.targetDevice": "mqtt-dude",
     "particle.firmwareVersion": "3.3.0",
-    "particle.targetPlatform": "electron"
+    "particle.targetPlatform": "photon"
 }

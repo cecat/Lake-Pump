@@ -41,29 +41,13 @@ Timer reportTimer(REPORT, reportPSI);
 bool  TimeToCheck     = TRUE;
 bool  TimeToReport    = TRUE;
 
-// Application watchdog - sometimes MQTT wedges things
-/* retained bool REBORN  = FALSE;  // did app watchdog restart us?
-ApplicationWatchdog *wd;
-void watchdogHandler() {
-  REBORN = TRUE;
-  System.reset(RESET_NO_WAIT);
-} */
-
 void setup() {
+    //for debug- function to enter test pressure values
+    Particle.function("testPSI", newPressure);
+
     Time.zone (-5);
     Particle.syncTime();
 
-    /* wd = new ApplicationWatchdog(DOGTIME, watchdogHandler, 1536); // restart after DOGTIME sec no pulse
-    if (REBORN) {
-      Particle.publish("****WEDGED****", "app watchdog restart", 3600, PRIVATE);
-      REBORN = FALSE;
-    }
-    if (SELF_RESTART) {
-      Particle.publish("----STUCK----", "self-reboot after 4 mqtt fails", 3600, PRIVATE);
-      SELF_RESTART = FALSE;
-    } */
-
-    pressure = analogRead(sensorPin);
     client.connect(CLIENT_NAME, HA_USR, HA_PWD);
     // check MQTT 
     if (client.isConnected()) {
@@ -75,33 +59,47 @@ void setup() {
     //client.disconnect();
     checkTimer.start();
     reportTimer.start();
+
+
 }
 
 void loop() {
-
+  delay(1000);
 // check everything when timer fires; notify only state changes
     if (TimeToCheck) {
         TimeToCheck = FALSE;
-        pressure = analogRead(sensorPin);
+
+        //cache = analogRead(sensorPin);
+        //testing instead of above analogRead while the sensor is in the mail
+          cache = random(500, 4500)/1000.0; 
+
+        pressure = map(cache, 0.5, 4.5, 0.0, 100.0);
 
         // evaluate pressure
         if (pressure > dangerLow && pressure < dangerHigh) {
           if (inDanger) {
-            tellHASS(TOPIC_A, String(pressure));
+            tellHASS(Topics[0], String(pressure));
+            tellHASS(Topics[3], String(pressure));
             inDanger=FALSE;
-          }
+          } 
         }
         if (pressure < dangerLow)    { 
-          delay(30000);    // let's give it 30s to see if this is a temporary thing
-          if (pressure < dangerLow) {
-            tellHASS(TOPIC_B, String(pressure)); 
+          //delay(MULLIGAN);    // let's give it time to see if this is a temporary thing
+          //cache = analogRead(sensorPin);
+          //pressure = map(cache, 0.5, 4.5, 0.0, 100.0);
+          if (pressure < dangerLow) {  // still low?
+            tellHASS(Topics[1], String(pressure)); 
+            tellHASS(Topics[3], String(pressure));
             inDanger=TRUE;
           }
         }
         if (pressure > dangerHigh)    { 
-          delay(30000);    // let's give it 30s to see if this is a temporary thing
-          if (pressure < dangerLow) {
-            tellHASS(TOPIC_C, String(pressure)); 
+          //delay(MULLIGAN);    // let's give it time to see if this is a temporary thing
+          //cache = analogRead(sensorPin);
+          //pressure = map(cache, 0.5, 4.5, 0.0, 100.0);
+          if (pressure > dangerHigh) { // still high?
+            tellHASS(Topics[2], String(pressure)); 
+            tellHASS(Topics[3], String(pressure));
             inDanger=TRUE;
           }
         }
@@ -109,23 +107,25 @@ void loop() {
 
     if (TimeToReport) {
       TimeToReport = FALSE;
-      // wd->checkin(); // poke app watchdog we're going in...
 
       //client.disconnect();
-      if (client.isConnected()) {
-        //Particle.publish("mqtt", "connected ok", 3600, PRIVATE); delay(100);
-      } else {  
-        Particle.publish("mqtt", "reconnecting", 3600, PRIVATE); delay(100);
+      if (!client.isConnected()) {
         client.connect(CLIENT_NAME, HA_USR,HA_PWD);
         delay(2000);
       }
 
       if (client.isConnected()){
         fails=0;
-        tellHASS(TOPIC_A, String(pressure));
+        tellHASS(Topics[3], String(pressure));
+        if (inDanger){
+          if (pressure < dangerLow) {
+              tellHASS(Topics[1], String(pressure));
+            }
+            else { tellHASS(Topics[2], String(pressure));}
+          } else   tellHASS(Topics[0], String(pressure));
         //client.disconnect();
       } else {
-        Particle.publish("mqtt", "Failed to connect", 3600, PRIVATE);
+        Particle.publish("mqtt", "Failed  connect", 3600, PRIVATE);
         mqttFails++;
         fails++;
         if (fails > GIVE_UP) {
@@ -135,9 +135,9 @@ void loop() {
         }
       }
       Particle.publish("MQTT", String("Fail rate " + String(mqttFails) + "/" + String(mqttCt)),3600, PRIVATE);
-      void myWatchdogHandler(void); // reset the dog
     }
 } 
+
 /************************************/
 /***         FUNCTIONS       ***/
 /************************************/
@@ -161,4 +161,11 @@ void tellHASS (const char *ha_topic, String ha_payload) {
   }
 }
 
-
+int newPressure(String command)
+{
+  pressure = 40;
+  if (command == "high") pressure = 60;
+  if (command == "low") pressure = 30;
+  TimeToReport = TRUE;
+  return 1;
+}
