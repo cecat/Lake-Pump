@@ -1,5 +1,5 @@
 {
-    "particle.targetDevice": "mqtt-dude",
+    "particle.targetDevice": "earl_tv_controller",
     "particle.firmwareVersion": "3.3.0",
     "particle.targetPlatform": "photon"
 }

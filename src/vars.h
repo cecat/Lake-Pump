@@ -4,14 +4,17 @@
 #define sensorPin       A0        // our pressure sensor reports a range from 0.5 to 4.5v
 
 // reporting and checking intervals
-#define CHECK        15000        // check the pump pressure frequently
-#define REPORT      120000        // (testing every 2m - restore to 299993 to report every 5 min (why not use a prime to avoid colliding with check)
-#define ALARM        30000        // if in danger, sound the alarm 30 seconds!
-#define MULLIGAN      10000        // wait 10s to see if the reading is still high/low
+#define CHECK             3001        // check the pump pressure frequently ~3s intervals
+#define REPORT           19997        // report average to HASS every ~20s
 
 // sensor vars
 double pressure    =       0.0;        // sensor readings from 0.5-4.5v
 double cache       =       0.0;        // temp cache to hold reading before converting w/ map()
+double averagePSI  =       0.0;        // let's report the average of the past few readings
+double psiRecent[] =                   // just the past 6, which are spaced CHECK ms apart
+    {40.0,40.0,40.0,40.0,40.0,40.0};   // all 40 which is normal pressure so we don't trip a fault during startup
+int        psiPtr  =         0;        // index through psiRecent
+double        acc  =       0.0;        // accumulator for averging
 
 // danger tripwire settings
 double dangerHigh  = 50.00;        // above this threshold maybe someone closed all valves
@@ -27,5 +30,11 @@ retained bool SELF_RESTART = FALSE;
 int fails = 0;
 int GIVE_UP = 3;
 
-// to debug, use function to input pressure values 
-int newPressure(String newPSI);
+// to debug
+int sequence = 0;
+double seq0[] =                   // simulate normal
+    {42.0,41.0,44.0,40.0,53.0,40.0};
+double seq1[] =                   // simulate increasing
+    {45.0,48.0,50.0,55.0,58.0,60.0};
+double seq2[] =                   // simulate decreasing
+    {39.0,32.0,34.0,30.0,25.0,20.0};   

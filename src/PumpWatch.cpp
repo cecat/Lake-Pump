@@ -57,7 +57,7 @@ bool  TimeToReport    = TRUE;
 void setup() {
     //for debug- function to enter test pressure values
     Particle.function("testPSI", newPressure);
-
+    Serial.begin(9600);
     Time.zone (-5);
     Particle.syncTime();
 
@@ -72,54 +72,41 @@ void setup() {
     //client.disconnect();
     checkTimer.start();
     reportTimer.start();
-
-
+    Serial.println("Starting up");
 }
 
 void loop() {
-  delay(1000);
+  delay(100);
 // check everything when timer fires; notify only state changes
     if (TimeToCheck) {
         TimeToCheck = FALSE;
 
         //cache = analogRead(sensorPin);
         //testing instead of above analogRead while the sensor is in the mail
-          cache = random(500, 4500)/1000.0; 
+       //   cache = random(500, 4500)/1000.0; 
 
-        pressure = map(cache, 0.5, 4.5, 0.0, 100.0);
-
-        // evaluate pressure
-        if (pressure > dangerLow && pressure < dangerHigh) {
-          if (inDanger) {
-            tellHASS(Topics[0], String(pressure));
-            tellHASS(Topics[3], String(pressure));
-            inDanger=FALSE;
-          } 
+        psiPtr = (psiPtr+1)%6;
+        //psiRecent[psiPtr] = map(cache, 0.5, 4.5, 0.0, 100.0);
+        switch (sequence) {
+          case 0:
+            psiRecent[psiPtr] = seq0[psiPtr];
+            break;
+          case 1:
+            psiRecent[psiPtr] = seq1[psiPtr];
+            break;
+          case 2:
+            psiRecent[psiPtr] = seq2[psiPtr];
+            break;
         }
-        if (pressure < dangerLow)    { 
-          //delay(MULLIGAN);    // let's give it time to see if this is a temporary thing
-          //cache = analogRead(sensorPin);
-          //pressure = map(cache, 0.5, 4.5, 0.0, 100.0);
-          if (pressure < dangerLow) {  // still low?
-            tellHASS(Topics[1], String(pressure)); 
-            tellHASS(Topics[3], String(pressure));
-            inDanger=TRUE;
-          }
-        }
-        if (pressure > dangerHigh)    { 
-          //delay(MULLIGAN);    // let's give it time to see if this is a temporary thing
-          //cache = analogRead(sensorPin);
-          //pressure = map(cache, 0.5, 4.5, 0.0, 100.0);
-          if (pressure > dangerHigh) { // still high?
-            tellHASS(Topics[2], String(pressure)); 
-            tellHASS(Topics[3], String(pressure));
-            inDanger=TRUE;
-          }
-        }
-    }
+    } 
 
     if (TimeToReport) {
       TimeToReport = FALSE;
+
+        acc = 0;
+        for (int i = 0; i<6; i++) acc = acc + psiRecent[i];
+        pressure = acc / 6;
+        psiPtr = 0;
 
       //client.disconnect();
       if (!client.isConnected()) {
@@ -129,14 +116,7 @@ void loop() {
 
       if (client.isConnected()){
         fails=0;
-        tellHASS(Topics[3], String(pressure));
-        if (inDanger){
-          if (pressure < dangerLow) {
-              tellHASS(Topics[1], String(pressure));
-            }
-            else { tellHASS(Topics[2], String(pressure));}
-          } else   tellHASS(Topics[0], String(pressure));
-        //client.disconnect();
+        tellHASS(PSI_TOPIC, String(pressure));
       } else {
         Particle.publish("mqtt", "Failed  connect", 3600, PRIVATE);
         mqttFails++;
@@ -176,9 +156,8 @@ void tellHASS (const char *ha_topic, String ha_payload) {
 
 int newPressure(String command)
 {
-  pressure = 40;
-  if (command == "high") pressure = 60;
-  if (command == "low") pressure = 30;
-  TimeToReport = TRUE;
+  sequence = 0;
+  if (command == "1") sequence = 1;
+  if (command == "2") sequence = 2;
   return 1;
 }
